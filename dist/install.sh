@@ -7,19 +7,15 @@
 
 BASIC_BUILD_FLAGS=(
     "-std=gnu++23"
-
+    "-stdlib=libc++"
+    "-fuse-ld=lld"
     -O2
-
-    -fcoroutines
-    -lstdc++exp
 )
 
 BASIC_USER_BUILD_FLAGS=(
     ${BASIC_BUILD_FLAGS[@]}
-
     -DONLINE_JUDGE
     -DATCODER
-
     -Wall
     -Wextra
 )
@@ -27,10 +23,8 @@ BASIC_USER_BUILD_FLAGS=(
 EXTRA_USER_BUILD_FLAGS=(
     "-march=native"
     "-flto=auto"
-
     "-fconstexpr-depth=2147483647"
-    "-fconstexpr-loop-limit=2147483647"
-    "-fconstexpr-ops-limit=2147483647"
+    "-fconstexpr-steps=2147483647"
 )
 
 USER_LIBRARY_FLAGS=(
@@ -41,9 +35,6 @@ USER_LIBRARY_FLAGS=(
     -lgmpxx -lgmp
     -I/opt/range-v3/include/
     -I/opt/unordered_dense/include/ -L/opt/unordered_dense/lib/
-
-    -I/opt/libtorch/include/ -I/opt/libtorch/include/torch/csrc/api/include/ -L/opt/libtorch/lib/
-    -Wl,-R/opt/libtorch/lib/ -ltorch -ltorch_cpu -lc10
 )
 
 INTERNAL_BUILD_FLAGS=( # for internal library building (CMake).
@@ -60,12 +51,20 @@ USER_BUILD_FLAGS=( # for contestants.
 # shellcheck disable=all
 PARALLEL="$(nproc)"
 
-VERSION="14.2.0-4ubuntu2~24.04"
+VERSION="19.1.7"
 set -eu
 
-sudo apt-get install -y "g++-14=${VERSION}"
+cd /tmp/
+sudo apt-get install -y lsb-release software-properties-common gnupg
 
-sudo apt-get install -y build-essential pigz pbzip2
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 19
+sudo apt-get install -y libc++-19-dev
+
+sudo apt-get purge -y --auto-remove lsb-release software-properties-common gnupg
+
+sudo apt-get install -y build-essential cmake pigz pbzip2
 
 
 # abseil
@@ -85,6 +84,8 @@ cd ./abseil/
 mkdir -p ./build/ && cd ./build/
 
 BUILD_ARGS=(
+    -DCMAKE_CXX_COMPILER=clang++-19
+    -DCMAKE_C_COMPILER=clang-19
     -DABSL_PROPAGATE_CXX_STD:BOOL=ON
     -DCMAKE_INSTALL_PREFIX:PATH=/opt/abseil/
     -DCMAKE_CXX_FLAGS:STRING="${INTERNAL_BUILD_FLAGS[*]}"
@@ -118,6 +119,9 @@ VERSION="1.86.0"
 
 set -eu
 
+sudo ln -s /usr/bin/clang-19 /usr/bin/clang
+sudo ln -s /usr/bin/clang++-19 /usr/bin/clang++
+
 cd /tmp/
 
 mkdir -p ./boost/
@@ -127,12 +131,12 @@ sudo tar -I pbzip2 -xf ./boost.tar.bz2 -C ./boost/ --strip-components 1
 
 cd ./boost/
 
-sudo ./bootstrap.sh --with-toolset=gcc --without-libraries=mpi,graph_parallel
+sudo ./bootstrap.sh --with-toolset=clang --without-libraries=mpi,graph_parallel
 
 BUILD_ARGS=(
     -d0
     "-j$(nproc)"
-    "toolset=gcc"
+    "toolset=clang"
     "threading=single"
     "variant=release"
     "link=static"
@@ -158,23 +162,6 @@ VERSION="2:6.3.0+dfsg-2ubuntu6"
 set -eu
 
 sudo apt-get install -y "libgmp3-dev=${VERSION}"
-
-
-# libtorch
-VERSION="2.5.1"
-
-set -eu
-
-cd /tmp/
-
-sudo wget -q "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${VERSION}%2Bcpu.zip" -O ./libtorch.zip
-sudo unzip -oq ./libtorch.zip -d ./
-
-sudo mkdir -p /opt/libtorch/include/libtorch/
-sudo mkdir -p /opt/libtorch/lib/libtorch/
-
-sudo cp -Trf ./libtorch/include/ /opt/libtorch/include/
-sudo cp -Trf ./libtorch/lib/ /opt/libtorch/lib/
 
 
 # range-v3
@@ -210,13 +197,11 @@ cd ./unordered_dense/
 
 mkdir -p ./build/ && cd ./build/
 
-sudo cmake \
-    -DCMAKE_CXX_FLAGS:STRING="${INTERNAL_BUILD_FLAGS[*]}" \
-    -DCMAKE_INSTALL_PREFIX:PATH=/opt/unordered_dense/ \
-    ../
+# ただファイルを配置するだけなのでオプションはいらない
+sudo cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/unordered_dense/ ../
 
 sudo cmake --build ./ --target install --parallel "${PARALLEL}"
 
 
-sudo apt-get remove -y --auto-remove build-essential pigz pbzip2
+sudo apt-get purge -y --auto-remove build-essential cmake pigz pbzip2
 

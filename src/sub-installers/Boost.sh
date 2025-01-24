@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eu
 
+sudo ln -s /usr/bin/clang-19 /usr/bin/clang
+sudo ln -s /usr/bin/clang++-19 /usr/bin/clang++
+
 cd /tmp/
 
 mkdir -p ./boost/
@@ -10,12 +13,12 @@ sudo tar -I pbzip2 -xf ./boost.tar.bz2 -C ./boost/ --strip-components 1
 
 cd ./boost/
 
-sudo ./bootstrap.sh --with-toolset=gcc --without-libraries=mpi,graph_parallel
+sudo ./bootstrap.sh --with-toolset=clang --without-libraries=mpi,graph_parallel
 
 BUILD_ARGS=(
     -d0
     "-j$(nproc)"
-    "toolset=gcc"
+    "toolset=clang"
     "threading=single"
     "variant=release"
     "link=static"

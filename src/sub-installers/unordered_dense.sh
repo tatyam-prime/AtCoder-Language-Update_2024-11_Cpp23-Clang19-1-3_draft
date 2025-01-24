@@ -12,9 +12,7 @@ cd ./unordered_dense/
 
 mkdir -p ./build/ && cd ./build/
 
-sudo cmake \
-    -DCMAKE_CXX_FLAGS:STRING="${INTERNAL_BUILD_FLAGS[*]}" \
-    -DCMAKE_INSTALL_PREFIX:PATH=/opt/unordered_dense/ \
-    ../
+# ただファイルを配置するだけなのでオプションはいらない
+sudo cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/unordered_dense/ ../
 
 sudo cmake --build ./ --target install --parallel "${PARALLEL}"

@@ -13,6 +13,8 @@ cd ./abseil/
 mkdir -p ./build/ && cd ./build/
 
 BUILD_ARGS=(
+    -DCMAKE_CXX_COMPILER=clang++-19
+    -DCMAKE_C_COMPILER=clang-19
     -DABSL_PROPAGATE_CXX_STD:BOOL=ON
     -DCMAKE_INSTALL_PREFIX:PATH=/opt/abseil/
     -DCMAKE_CXX_FLAGS:STRING="${INTERNAL_BUILD_FLAGS[*]}"

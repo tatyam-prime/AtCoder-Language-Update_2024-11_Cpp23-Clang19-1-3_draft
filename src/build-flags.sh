@@ -2,19 +2,15 @@
 
 BASIC_BUILD_FLAGS=(
     "-std=gnu++23"
-
+    "-stdlib=libc++"
+    "-fuse-ld=lld"
     -O2
-
-    -fcoroutines
-    -lstdc++exp
 )
 
 BASIC_USER_BUILD_FLAGS=(
     ${BASIC_BUILD_FLAGS[@]}
-
     -DONLINE_JUDGE
     -DATCODER
-
     -Wall
     -Wextra
 )
@@ -22,10 +18,8 @@ BASIC_USER_BUILD_FLAGS=(
 EXTRA_USER_BUILD_FLAGS=(
     "-march=native"
     "-flto=auto"
-
     "-fconstexpr-depth=2147483647"
-    "-fconstexpr-loop-limit=2147483647"
-    "-fconstexpr-ops-limit=2147483647"
+    "-fconstexpr-steps=2147483647"
 )
 
 USER_LIBRARY_FLAGS=(
@@ -36,9 +30,6 @@ USER_LIBRARY_FLAGS=(
     -lgmpxx -lgmp
     -I/opt/range-v3/include/
     -I/opt/unordered_dense/include/ -L/opt/unordered_dense/lib/
-
-    -I/opt/libtorch/include/ -I/opt/libtorch/include/torch/csrc/api/include/ -L/opt/libtorch/lib/
-    -Wl,-R/opt/libtorch/lib/ -ltorch -ltorch_cpu -lc10
 )
 
 INTERNAL_BUILD_FLAGS=( # for internal library building (CMake).
